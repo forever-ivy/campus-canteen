@@ -1,0 +1,7 @@
+{
+    "servers": {
+        "my-mcp-server-77cc7adb": {
+            "url": "https://www.shadcn.io/api/mcp"
+        }
+    }
+}
