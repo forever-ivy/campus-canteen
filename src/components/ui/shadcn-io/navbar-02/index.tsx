@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { BookOpenIcon, InfoIcon, LifeBuoyIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "@/components/ui/shadcn-io/theme-switcher";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 
 // Simple logo component for the navbar
 const Logo = (props: React.ImgHTMLAttributes<HTMLImageElement>) => {
@@ -99,7 +100,7 @@ export interface Navbar02Props extends React.HTMLAttributes<HTMLElement> {
 
 // Default navigation links
 const defaultNavigationLinks: Navbar02NavItem[] = [
-  { href: "/", label: "主页" },
+  { href: "/dashboard", label: "主页" },
   {
     label: "深度分析",
     submenu: true,
@@ -122,7 +123,7 @@ const defaultNavigationLinks: Navbar02NavItem[] = [
       },
     ],
   },
-  { href: "/orders", label: "订单流水" },
+  { href: "/order", label: "订单管理" },
 ];
 
 export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
@@ -130,7 +131,7 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
     {
       className,
       logo = <Logo />,
-      logoHref = "#",
+      logoHref = "/",
       navigationLinks = defaultNavigationLinks,
       signInText = "Sign In",
       signInHref = "#signin",
@@ -144,6 +145,7 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
   ) => {
     const [isMobile, setIsMobile] = useState(false);
     const containerRef = useRef<HTMLElement>(null);
+    const router = useRouter();
 
     useEffect(() => {
       const checkWidth = () => {
@@ -178,45 +180,13 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
       [ref]
     );
 
-    const renderIcon = (iconName: string) => {
-      switch (iconName) {
-        case "BookOpenIcon":
-          return (
-            <BookOpenIcon
-              size={16}
-              className="text-foreground opacity-60"
-              aria-hidden={true}
-            />
-          );
-        case "LifeBuoyIcon":
-          return (
-            <LifeBuoyIcon
-              size={16}
-              className="text-foreground opacity-60"
-              aria-hidden={true}
-            />
-          );
-        case "InfoIcon":
-          return (
-            <InfoIcon
-              size={16}
-              className="text-foreground opacity-60"
-              aria-hidden={true}
-            />
-          );
-        default:
-          return null;
-      }
-    };
-
-    const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
     const { theme: currentTheme, setTheme: changeTheme } = useTheme();
 
     return (
       <header
         ref={combinedRef}
         className={cn(
-          "sticky top-0 z-[9999] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6 [&_*]:no-underline",
+          "sticky top-0 z-[9999] w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-5 md:px-6 [&_*]:no-underline ",
           className
         )}
         {...props}
@@ -250,7 +220,12 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
                                 {link.items?.map((item, itemIndex) => (
                                   <li key={itemIndex}>
                                     <button
-                                      onClick={(e) => e.preventDefault()}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        if (item.href) {
+                                          router.push(item.href);
+                                        }
+                                      }}
                                       className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer no-underline"
                                     >
                                       {item.label}
@@ -261,7 +236,12 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
                             </>
                           ) : (
                             <button
-                              onClick={(e) => e.preventDefault()}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (link.href) {
+                                  router.push(link.href);
+                                }
+                              }}
                               className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer no-underline"
                             >
                               {link.label}
@@ -292,11 +272,16 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
             )}
             {/* Logo */}
             <button
-              onClick={(e) => e.preventDefault()}
-              className="flex items-center space-x-2 text-foreground hover:text-primary/90 transition-colors cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                if (logoHref) {
+                  router.push(logoHref);
+                }
+              }}
+              className="flex items-center px-4.5 space-x-2 text-foreground hover:text-primary/90 transition-colors cursor-pointer"
             >
               <div className="text-2xl">{logo}</div>
-              <span className="hidden font-bold text-xl sm:inline-block px-6">
+              <span className="hidden font-bold font-sans text-2xl  mx-5  sm:inline-block px-6 ">
                 智慧食堂管理系统
               </span>
             </button>
@@ -321,7 +306,10 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
                                 <div className="row-span-3">
                                   <NavigationMenuLink asChild>
                                     <button
-                                      onClick={(e) => e.preventDefault()}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        router.push("/analytics");
+                                      }}
                                       className="flex h-full w-full select-none flex-col justify-center items-center text-center rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md cursor-pointer"
                                     >
                                       <div className="mb-3 text-xl font-medium">
@@ -389,12 +377,16 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
                         </>
                       ) : (
                         <NavigationMenuLink
-                          href={link.href}
                           className={cn(
                             navigationMenuTriggerStyle(),
                             "cursor-pointer"
                           )}
-                          onClick={(e) => e.preventDefault()}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (link.href) {
+                              router.push(link.href);
+                            }
+                          }}
                         >
                           {link.label}
                         </NavigationMenuLink>
@@ -444,11 +436,18 @@ const ListItem = React.forwardRef<
     }
   };
 
+  const router = useRouter();
+
   return (
     <NavigationMenuLink asChild>
       <a
         ref={ref}
-        onClick={(e) => e.preventDefault()}
+        onClick={(e) => {
+          e.preventDefault();
+          if (props.href) {
+            router.push(props.href);
+          }
+        }}
         className={cn(
           "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer",
           className

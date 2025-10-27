@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 function FloatingPaths({ position }: { position: number }) {
   const paths = Array.from({ length: 36 }, (_, i) => ({
@@ -58,6 +59,11 @@ export function BackgroundPaths({
   title = "燕山大学智能食堂",
 }: BackgroundPathsProps) {
   const words = title.split(" ");
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push("/dashboard");
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center overflow-hidden bg-white dark:bg-neutral-950">
@@ -104,6 +110,7 @@ export function BackgroundPaths({
               overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
           >
             <Button
+              onClick={handleClick}
               variant="ghost"
               className="rounded-[1.15rem] px-8 py-6 text-lg font-semibold backdrop-blur-md 
                 bg-white/95 hover:bg-white/100 dark:bg-black/95 dark:hover:bg-black/100 
