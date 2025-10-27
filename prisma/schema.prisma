@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Dish {
+  DishID      Int           @id(map: "PK__Dish__18834F7012962B88")
+  Name        String        @db.VarChar(100)
+  Price       Decimal       @db.Decimal(8, 2)
+  Stock       Int           @default(0, map: "DF__Dish__Stock__440B1D61")
+  MerchantID  Int
+  Merchant    Merchant      @relation(fields: [MerchantID], references: [MerchantID], onUpdate: NoAction, map: "FK_Dish_Merchant")
+  OrderDetail OrderDetail[]
+}
+
+model Merchant {
+  MerchantID Int     @id(map: "PK__Merchant__044165630EE83CC1")
+  Name       String  @db.VarChar(100)
+  Location   String? @db.VarChar(100)
+  Manager    String? @db.VarChar(50)
+  Dish       Dish[]
+  Order      Order[]
+}
+
+model Order {
+  OrderID       BigInt          @id(map: "PK__Order__C3905BAF98BDF695")
+  StudentID     Int
+  MerchantID    Int
+  OrderTime     DateTime        @default(now(), map: "DF__Order__OrderTime__49C3F6B7") @db.DateTime
+  TotalAmount   Decimal         @db.Decimal(10, 2)
+  Status        String          @db.VarChar(20)
+  Merchant      Merchant        @relation(fields: [MerchantID], references: [MerchantID], onUpdate: NoAction, map: "FK_Order_Merchant")
+  Student       Student         @relation(fields: [StudentID], references: [StudentID], onDelete: Cascade, onUpdate: NoAction, map: "FK_Order_Student")
+  OrderDetail   OrderDetail[]
+  PaymentMethod PaymentMethod[]
+  PointRecord   PointRecord?
+}
+
+model OrderDetail {
+  OrderID  BigInt
+  DishID   Int
+  Quantity Int
+  Subtotal Decimal @db.Decimal(10, 2)
+  Dish     Dish    @relation(fields: [DishID], references: [DishID], onUpdate: NoAction, map: "FK_OrderDetail_Dish")
+  Order    Order   @relation(fields: [OrderID], references: [OrderID], onDelete: Cascade, onUpdate: NoAction, map: "FK_OrderDetail_Order")
+
+  @@id([OrderID, DishID], map: "PK_OrderDetail")
+}
+
+model PaymentMethod {
+  PayID     BigInt   @id(map: "PK__PaymentM__EE8FCE2F81E7201B") @default(autoincrement())
+  OrderID   BigInt
+  PayMethod String   @db.VarChar(50)
+  Amount    Decimal  @db.Decimal(10, 2)
+  PayTime   DateTime @default(now(), map: "DF__PaymentMe__PayTi__5535A963") @db.DateTime
+  Order     Order    @relation(fields: [OrderID], references: [OrderID], onDelete: Cascade, onUpdate: NoAction, map: "FK_PaymentMethod_Order")
+}
+
+model PointRecord {
+  RecordID  BigInt   @id(map: "PK__PointRec__FBDF78C9BB7880D1") @default(autoincrement())
+  StudentID Int
+  OrderID   BigInt   @unique(map: "UQ_PointRecord_OrderID")
+  Points    Int
+  CreatedAt DateTime @default(now(), map: "DF__PointReco__Creat__5BE2A6F2") @db.DateTime
+  Order     Order    @relation(fields: [OrderID], references: [OrderID], onUpdate: NoAction, map: "FK_PointRecord_Order")
+  Student   Student  @relation(fields: [StudentID], references: [StudentID], onUpdate: NoAction, map: "FK_PointRecord_Student")
+}
+
+model Student {
+  StudentID   Int           @id(map: "PK__Student__32C52A79DF599148")
+  Name        String        @db.VarChar(50)
+  SEX         String?       @db.Char(1)
+  Major       String?       @db.VarChar(100)
+  Balance     Decimal       @default(0.00, map: "DF__Student__Balance__3B75D760") @db.Decimal(10, 2)
+  Points      Int           @default(0, map: "DF__Student__Points__3C69FB99")
+  Order       Order[]
+  PointRecord PointRecord[]
+}
