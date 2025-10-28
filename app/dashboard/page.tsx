@@ -3,7 +3,7 @@
 import { ChartAreaInteractive } from "@/components/ui/shadcn-io/area-chart-01";
 import { Chart } from "../../components/Chart/Chart";
 import KpiChart from "../../components/Chart/KpiChart";
-import StoreLogo from "../../components/StoreLogo";
+import StoreLogo from "../../components/Navigation/StoreLogo";
 
 export default function DashBoard() {
   return (

@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/table";
 import React, { useState, useEffect } from "react";
 import { Utensils } from "lucide-react";
-import DishesPic from "../components/DishesPic";
+import DishesPic from "./DishesPic";
 import { Pill, PillIndicator } from "@/components/ui/shadcn-io/pill";
 import axios from "axios";
-import type { OrderDetailResponse, OrderListItem } from "../types/orders";
+import type { OrderDetailResponse, OrderListItem } from "../../types/orders";
 
 interface ComponentProps {
   order: {
@@ -34,7 +34,7 @@ export default function Component({ order }: ComponentProps) {
           `/api/orders/${order.id}`
         );
         setDetailOrder(response.data.order);
-        console.log('API 响应数据:', response.data.order); // 直接打印响应数据
+        console.log("API 响应数据:", response.data.order); // 直接打印响应数据
       } catch (error) {
         console.error("Error fetching order details:", error);
       }
@@ -45,7 +45,7 @@ export default function Component({ order }: ComponentProps) {
   // 监听状态变化的调试 useEffect
   useEffect(() => {
     if (detailOrder) {
-      console.log('订单详情状态已更新:', detailOrder);
+      console.log("订单详情状态已更新:", detailOrder);
     }
   }, [detailOrder]);
 

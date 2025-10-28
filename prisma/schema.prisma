@@ -9,7 +9,7 @@ datasource db {
 }
 
 model Dish {
-  DishID      Int           @id(map: "PK__Dish__18834F700A10FA78")
+  DishID      Int           @id(map: "PK__Dish__18834F70F5E93483")
   Name        String        @db.NVarChar(100)
   Price       Decimal       @db.Decimal(8, 2)
   Stock       Int           @default(0, map: "DF__Dish__Stock__403A8C7D")
@@ -19,7 +19,7 @@ model Dish {
 }
 
 model Merchant {
-  MerchantID Int     @id(map: "PK__Merchant__04416563A3A45189")
+  MerchantID Int     @id(map: "PK__Merchant__04416563CC3A1436")
   Name       String  @db.NVarChar(100)
   Location   String? @db.NVarChar(100)
   Manager    String? @db.NVarChar(50)
@@ -28,7 +28,7 @@ model Merchant {
 }
 
 model Order {
-  OrderID       BigInt          @id(map: "PK__Order__C3905BAF0B04EAAA")
+  OrderID       BigInt          @id(map: "PK__Order__C3905BAF800D5A0B")
   StudentID     Int
   MerchantID    Int
   OrderTime     DateTime        @default(now(), map: "DF__Order__OrderTime__45F365D3") @db.DateTime
@@ -53,7 +53,7 @@ model OrderDetail {
 }
 
 model PaymentMethod {
-  PayID     BigInt   @id(map: "PK__PaymentM__EE8FCE2FE88CA544") @default(autoincrement())
+  PayID     BigInt   @id(map: "PK__PaymentM__EE8FCE2FBB502028") @default(autoincrement())
   OrderID   BigInt
   PayMethod String   @db.NVarChar(50)
   Amount    Decimal  @db.Decimal(10, 2)
@@ -62,7 +62,7 @@ model PaymentMethod {
 }
 
 model PointRecord {
-  RecordID  BigInt   @id(map: "PK__PointRec__FBDF78C9A87D04FB") @default(autoincrement())
+  RecordID  BigInt   @id(map: "PK__PointRec__FBDF78C9236D7743") @default(autoincrement())
   StudentID Int
   OrderID   BigInt   @unique(map: "UQ_PointRecord_OrderID")
   Points    Int
@@ -72,7 +72,7 @@ model PointRecord {
 }
 
 model Student {
-  StudentID   Int           @id(map: "PK__Student__32C52A79C2FB5A5E")
+  StudentID   Int           @id(map: "PK__Student__32C52A797EDEFE00")
   Name        String        @db.NVarChar(50)
   SEX         String?       @db.NChar(1)
   Major       String?       @db.NVarChar(100)
