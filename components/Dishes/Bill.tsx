@@ -15,6 +15,11 @@ import DishesPic from "./DishesPic";
 import { Pill, PillIndicator } from "@/components/ui/shadcn-io/pill";
 import axios from "axios";
 import type { OrderDetailResponse, OrderListItem } from "../../types/orders";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import PaymethodIcom from "../PaymethodIcon";
+import PaymethodIcon from "../PaymethodIcon";
 
 interface ComponentProps {
   order: {
@@ -34,7 +39,6 @@ export default function Component({ order }: ComponentProps) {
           `/api/orders/${order.id}`
         );
         setDetailOrder(response.data.order);
-        console.log("API 响应数据:", response.data.order); // 直接打印响应数据
       } catch (error) {
         console.error("Error fetching order details:", error);
       }
@@ -42,17 +46,19 @@ export default function Component({ order }: ComponentProps) {
     fetchOrderDetails();
   }, [order.id]);
 
-  // 监听状态变化的调试 useEffect
-  useEffect(() => {
-    if (detailOrder) {
-      console.log("订单详情状态已更新:", detailOrder);
-    }
-  }, [detailOrder]);
-
+  const router = useRouter();
   return (
     <React.Fragment>
-      <header className="flex items-center justify-between p-6">
+      <header className="flex items-center justify-between w-full p-6">
         <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
+            className="rounded-full"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <div className="rounded-full bg-amber-100 w-12 h-12 flex items-center justify-center">
             <Utensils className="w-8 h-8 text-gray-400" />
           </div>
@@ -92,9 +98,14 @@ export default function Component({ order }: ComponentProps) {
             </div>
             <div>
               <p className="font-bold font-sans text-zinc-400">支付方式</p>
-              <p className="font-sans ">
-                {detailOrder?.payment?.[0]?.payMethod ?? "--"}
-              </p>
+              <div className="flex">
+                <p className="font-sans ">
+                  {detailOrder?.payment?.[0]?.payMethod ?? "--"}
+                </p>
+                <PaymethodIcon
+                  method={detailOrder?.payment?.[0]?.payMethod ?? "--"}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

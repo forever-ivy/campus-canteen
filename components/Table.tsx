@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type { ColumnDef } from "@/components/ui/shadcn-io/table";
 import {
   TableBody,
@@ -17,69 +17,38 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import axios from "axios";
+import { useOrderStore } from "../stores/orderStore";
+
+type Order = {
+  id: string;
+  student: string;
+  store: string;
+  amount: number;
+  orderedAt: string | null;
+};
 
 const Table = () => {
-  type Order = {
-    id: string;
-    student: string;
-    store: string;
-    amount: number;
-    orderedAt: string | null;
-  };
-
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { fetchOrders, orders, loading, error } = useOrderStore();
 
   useEffect(() => {
-    async function fetchOrders() {
-      try {
-        const response = await axios.get("/api/orders");
-        const normalized: Order[] = (response.data?.items ?? []).map(
-          (item: Record<string, unknown>) => {
-            const orderId =
-              typeof item.orderId === "string" ? item.orderId : "";
-            const studentName =
-              typeof item.studentName === "string" ? item.studentName : null;
-            const merchantName =
-              typeof item.merchantName === "string" ? item.merchantName : null;
-            const amountSource = item.totalAmount;
-            const parsedAmount =
-              typeof amountSource === "string"
-                ? Number(amountSource.replace(/[^\d.-]/g, ""))
-                : Number(amountSource ?? 0);
-            const totalAmount = Number.isFinite(parsedAmount)
-              ? parsedAmount
-              : 0;
-
-            const studentId =
-              typeof item.studentId === "number" ||
-              typeof item.studentId === "string"
-                ? item.studentId
-                : "--";
-            const merchantId =
-              typeof item.merchantId === "number" ||
-              typeof item.merchantId === "string"
-                ? item.merchantId
-                : "--";
-
-            return {
-              id: orderId || String(studentId) || "",
-              student: studentName ?? `学号 ${studentId}`,
-              store: merchantName ?? `商户 ${merchantId}`,
-              amount: Number.isFinite(totalAmount) ? totalAmount : 0,
-              orderedAt:
-                typeof item.orderTime === "string" ? item.orderTime : null,
-            };
-          }
-        );
-
-        setOrders(normalized);
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-      }
-    }
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
+
+  if (loading) {
+    return (
+      <Card className="w-full h-full p-7 text-sm font-sans flex items-center justify-center">
+        <div className="text-muted-foreground">加载中...</div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full h-full p-7 text-sm font-sans flex items-center justify-center">
+        <div className="text-destructive">加载失败: {error}</div>
+      </Card>
+    );
+  }
 
   const columns: ColumnDef<Order>[] = [
     {
