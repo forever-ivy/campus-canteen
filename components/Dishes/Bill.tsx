@@ -18,7 +18,6 @@ import type { OrderDetailResponse, OrderListItem } from "../../types/orders";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import PaymethodIcom from "../PaymethodIcon";
 import PaymethodIcon from "../PaymethodIcon";
 
 interface ComponentProps {
@@ -45,6 +44,23 @@ export default function Component({ order }: ComponentProps) {
     }
     fetchOrderDetails();
   }, [order.id]);
+
+  const formattime = (time: string) => {
+    const date = new Date(time);
+    const formatted = new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Shanghai",
+    })
+      .format(date)
+      .replace(/\//g, "-");
+    return <p className="font-sans ">{formatted} </p>;
+  };
 
   const router = useRouter();
   return (
@@ -86,7 +102,7 @@ export default function Component({ order }: ComponentProps) {
             </div>
             <div>
               <p className="font-bold font-sans text-zinc-400">下单时间</p>
-              <p className="font-sans ">{detailOrder?.orderTime}</p>
+              {formattime(detailOrder?.orderTime ?? "")}
             </div>
             <div>
               <p className="font-bold font-sans text-zinc-400">档口号</p>

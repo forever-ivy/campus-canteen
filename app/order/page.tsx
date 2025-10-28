@@ -1,6 +1,7 @@
 import Table from "../../components/Table";
 import { SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import Table2 from "../../components/Table2";
 
 const Order = () => {
   return (
@@ -23,7 +24,7 @@ const Order = () => {
       </div>
       <div className="w-full h-auto my-5 flex justify-center">
         <div className="w-15/16">
-          <Table />
+          <Table2 />
         </div>
       </div>
     </div>
