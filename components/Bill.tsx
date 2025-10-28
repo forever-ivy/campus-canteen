@@ -9,11 +9,12 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Utensils } from "lucide-react";
 import DishesPic from "../components/DishesPic";
 import { Pill, PillIndicator } from "@/components/ui/shadcn-io/pill";
+import axios from "axios";
+import type { OrderDetailResponse, OrderListItem } from "../types/orders";
 
 interface ComponentProps {
   order: {
@@ -22,6 +23,32 @@ interface ComponentProps {
 }
 
 export default function Component({ order }: ComponentProps) {
+  // 只存储订单对象，方便直接访问属性
+  const [detailOrder, setDetailOrder] = useState<OrderListItem>();
+
+  useEffect(() => {
+    async function fetchOrderDetails() {
+      try {
+        // 指定响应类型，并取 order 对象
+        const response = await axios.get<OrderDetailResponse>(
+          `/api/orders/${order.id}`
+        );
+        setDetailOrder(response.data.order);
+        console.log('API 响应数据:', response.data.order); // 直接打印响应数据
+      } catch (error) {
+        console.error("Error fetching order details:", error);
+      }
+    }
+    fetchOrderDetails();
+  }, [order.id]);
+
+  // 监听状态变化的调试 useEffect
+  useEffect(() => {
+    if (detailOrder) {
+      console.log('订单详情状态已更新:', detailOrder);
+    }
+  }, [detailOrder]);
+
   return (
     <React.Fragment>
       <header className="flex items-center justify-between p-6">
@@ -36,39 +63,38 @@ export default function Component({ order }: ComponentProps) {
             <span className="scale-125">
               <PillIndicator pulse variant="success" />
             </span>
-            Success
+            {detailOrder?.status}
           </Pill>
         </div>
       </header>
       <main className="p-6">
         <Card>
-          {/* <CardHeader>
-            <CardTitle>Customer Details</CardTitle>
-          </CardHeader> */}
           <CardContent className="gap-5 grid grid-cols-3 grid-rows-2">
             <div>
               <p className="font-bold font-sans text-zinc-400">订单号</p>
-              <p className="font-sans ">{order.id}</p>
+              <p className="font-sans ">{detailOrder?.orderId}</p>
             </div>
             <div>
-              <p className="font-bold font-sans text-zinc-400">学生ID</p>
-              <p className="font-sans ">202411040508</p>
+              <p className="font-bold font-sans text-zinc-400">学生编号</p>
+              <p className="font-sans ">{detailOrder?.studentId}</p>
             </div>
             <div>
               <p className="font-bold font-sans text-zinc-400">下单时间</p>
-              <p className="font-sans ">2025/8/24/14:30</p>
+              <p className="font-sans ">{detailOrder?.orderTime}</p>
             </div>
             <div>
               <p className="font-bold font-sans text-zinc-400">档口号</p>
-              <p className="font-sans ">1号档</p>
+              <p className="font-sans ">{detailOrder?.merchantId}</p>
             </div>
             <div>
               <p className="font-bold font-sans text-zinc-400">总金额</p>
-              <p className="font-sans ">100元</p>
+              <p className="font-sans ">{detailOrder?.totalAmount}</p>
             </div>
             <div>
               <p className="font-bold font-sans text-zinc-400">支付方式</p>
-              <p className="font-sans ">微信支付</p>
+              <p className="font-sans ">
+                {detailOrder?.payment?.[0]?.payMethod ?? "--"}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -83,52 +109,38 @@ export default function Component({ order }: ComponentProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>菜品编号</TableHead>
-                  <TableHead>档口号</TableHead>
+                  <TableHead>菜品名称</TableHead>
+                  <TableHead>数量</TableHead>
                   <TableHead>价格</TableHead>
                   <TableHead>积分</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell>1001</TableCell>
-                  <TableCell>1号档</TableCell>
-                  <TableCell>$100</TableCell>
-                  <TableCell>100分</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>1002</TableCell>
-                  <TableCell>2号档</TableCell>
-                  <TableCell>$150</TableCell>
-                  <TableCell>150分</TableCell>
-                </TableRow>
+                {detailOrder?.details && detailOrder.details.length ? (
+                  detailOrder.details.map((detail) => (
+                    <TableRow key={detail.dishId}>
+                      <TableCell>{detail.dishName ?? "--"}</TableCell>
+                      <TableCell>{detail.quantity}</TableCell>
+                      <TableCell>{detail.price}</TableCell>
+                      <TableCell>{detail.subtotal}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-center text-muted-foreground"
+                    >
+                      暂无菜品信息
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
       </main>
-      <footer className="p-6">
-        {/* <Card>
-          <CardHeader>
-            <CardTitle>Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="flex items-center">
-              <div>Subtotal</div>
-              <div className="ml-auto">$350.00</div>
-            </div>
-            <div className="flex items-center">
-              <div>Taxes (10%)</div>
-              <div className="ml-auto">$35.00</div>
-            </div>
-            <Separator />
-            <div className="flex items-center font-medium">
-              <div>Total</div>
-              <div className="ml-auto">$385.00</div>
-            </div>
-          </CardContent>
-        </Card> */}
-      </footer>
+      <footer className="p-6"></footer>
     </React.Fragment>
   );
 }

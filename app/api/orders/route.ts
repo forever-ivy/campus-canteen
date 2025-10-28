@@ -1,9 +1,5 @@
-/**
- * @file /api/orders/route.ts
- * @description 该路由用于获取订单列表, 支持分页、搜索和筛选。
- */
-import type { Prisma } from "../../../generated/prisma/client";
 import prisma from "../../../lib/prisma";
+import type { Prisma } from "../../../generated/prisma/client";
 import { NextResponse } from "next/server";
 import {
   endOfDay,
@@ -11,6 +7,7 @@ import {
   toBigIntString,
   toCurrency,
 } from "../_utils/transform";
+import type { OrderListItem, OrderListResponse } from "../../../types/orders";
 
 /**
  * @summary 获取订单列表 (GET /api/orders)
@@ -47,7 +44,7 @@ export async function GET(request: Request) {
     const page = Math.max(1, Number(url.searchParams.get("page") || 1));
     const pageSize = Math.min(
       100,
-      Math.max(1, Number(url.searchParams.get("pageSize") || 20)),
+      Math.max(1, Number(url.searchParams.get("pageSize") || 20))
     );
 
     // --- 搜索与筛选参数 ---
@@ -101,8 +98,8 @@ export async function GET(request: Request) {
         const normalized = q.replace(/\s+/g, " ").trim();
         const numeric = normalized.replace(/\D/g, "");
         const orFilters: Prisma.OrderWhereInput[] = [
-          { Student: { Name: { contains: normalized, mode: "insensitive" } } },
-          { Merchant: { Name: { contains: normalized, mode: "insensitive" } } },
+          { Student: { Name: { contains: normalized } } },
+          { Merchant: { Name: { contains: normalized } } },
         ];
         if (numeric) {
           try {
@@ -137,8 +134,9 @@ export async function GET(request: Request) {
     ]);
 
     // 格式化返回的订单数据
-    const items = orders.map((order) => ({
-      orderId: toBigIntString(order.OrderID),
+    const items: OrderListItem[] = orders.map((order) => ({
+      // 保证是 string，避免 string | null
+      orderId: order.OrderID.toString(),
       studentId: order.StudentID,
       studentName: order.Student?.Name ?? null,
       merchantId: order.MerchantID,
@@ -162,12 +160,13 @@ export async function GET(request: Request) {
     }));
 
     // 返回最终结果
-    return NextResponse.json({
+    const result: OrderListResponse = {
       page,
       pageSize,
       total,
       items,
-    });
+    };
+    return NextResponse.json(result);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unexpected server error";

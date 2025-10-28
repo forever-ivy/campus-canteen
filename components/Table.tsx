@@ -255,7 +255,14 @@ const Table = () => {
               typeof item.studentName === "string" ? item.studentName : null;
             const merchantName =
               typeof item.merchantName === "string" ? item.merchantName : null;
-            const totalAmount = Number(item.totalAmount ?? 0);
+            const amountSource = item.totalAmount;
+            const parsedAmount =
+              typeof amountSource === "string"
+                ? Number(amountSource.replace(/[^\d.-]/g, ""))
+                : Number(amountSource ?? 0);
+            const totalAmount = Number.isFinite(parsedAmount)
+              ? parsedAmount
+              : 0;
 
             const studentId =
               typeof item.studentId === "number" ||
@@ -360,7 +367,7 @@ const Table = () => {
   ];
 
   return (
-    <Card className="w-full h-full p-7 text-sm font-sans">
+    <Card className="w-full h-full p-7  text-sm font-sans">
       <TableProvider columns={columns} data={orders}>
         <TableHeader>
           {({ headerGroup }) => (

@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -12,4 +6,78 @@ generator client {
 datasource db {
   provider = "sqlserver"
   url      = env("DATABASE_URL")
+}
+
+model Dish {
+  DishID      Int           @id(map: "PK__Dish__18834F700A10FA78")
+  Name        String        @db.NVarChar(100)
+  Price       Decimal       @db.Decimal(8, 2)
+  Stock       Int           @default(0, map: "DF__Dish__Stock__403A8C7D")
+  MerchantID  Int
+  Merchant    Merchant      @relation(fields: [MerchantID], references: [MerchantID], onUpdate: NoAction, map: "FK_Dish_Merchant")
+  OrderDetail OrderDetail[]
+}
+
+model Merchant {
+  MerchantID Int     @id(map: "PK__Merchant__04416563A3A45189")
+  Name       String  @db.NVarChar(100)
+  Location   String? @db.NVarChar(100)
+  Manager    String? @db.NVarChar(50)
+  Dish       Dish[]
+  Order      Order[]
+}
+
+model Order {
+  OrderID       BigInt          @id(map: "PK__Order__C3905BAF0B04EAAA")
+  StudentID     Int
+  MerchantID    Int
+  OrderTime     DateTime        @default(now(), map: "DF__Order__OrderTime__45F365D3") @db.DateTime
+  TotalAmount   Decimal         @db.Decimal(10, 2)
+  Status        String          @db.NVarChar(20)
+  Merchant      Merchant        @relation(fields: [MerchantID], references: [MerchantID], onUpdate: NoAction, map: "FK_Order_Merchant")
+  Student       Student         @relation(fields: [StudentID], references: [StudentID], onDelete: Cascade, onUpdate: NoAction, map: "FK_Order_Student")
+  OrderDetail   OrderDetail[]
+  PaymentMethod PaymentMethod[]
+  PointRecord   PointRecord?
+}
+
+model OrderDetail {
+  OrderID  BigInt
+  DishID   Int
+  Quantity Int
+  Subtotal Decimal @db.Decimal(10, 2)
+  Dish     Dish    @relation(fields: [DishID], references: [DishID], onUpdate: NoAction, map: "FK_OrderDetail_Dish")
+  Order    Order   @relation(fields: [OrderID], references: [OrderID], onDelete: Cascade, onUpdate: NoAction, map: "FK_OrderDetail_Order")
+
+  @@id([OrderID, DishID], map: "PK_OrderDetail")
+}
+
+model PaymentMethod {
+  PayID     BigInt   @id(map: "PK__PaymentM__EE8FCE2FE88CA544") @default(autoincrement())
+  OrderID   BigInt
+  PayMethod String   @db.NVarChar(50)
+  Amount    Decimal  @db.Decimal(10, 2)
+  PayTime   DateTime @default(now(), map: "DF__PaymentMe__PayTi__5165187F") @db.DateTime
+  Order     Order    @relation(fields: [OrderID], references: [OrderID], onDelete: Cascade, onUpdate: NoAction, map: "FK_PaymentMethod_Order")
+}
+
+model PointRecord {
+  RecordID  BigInt   @id(map: "PK__PointRec__FBDF78C9A87D04FB") @default(autoincrement())
+  StudentID Int
+  OrderID   BigInt   @unique(map: "UQ_PointRecord_OrderID")
+  Points    Int
+  CreatedAt DateTime @default(now(), map: "DF__PointReco__Creat__5812160E") @db.DateTime
+  Order     Order    @relation(fields: [OrderID], references: [OrderID], onUpdate: NoAction, map: "FK_PointRecord_Order")
+  Student   Student  @relation(fields: [StudentID], references: [StudentID], onUpdate: NoAction, map: "FK_PointRecord_Student")
+}
+
+model Student {
+  StudentID   Int           @id(map: "PK__Student__32C52A79C2FB5A5E")
+  Name        String        @db.NVarChar(50)
+  SEX         String?       @db.NChar(1)
+  Major       String?       @db.NVarChar(100)
+  Balance     Decimal       @default(0.00, map: "DF__Student__Balance__37A5467C") @db.Decimal(10, 2)
+  Points      Int           @default(0, map: "DF__Student__Points__38996AB5")
+  Order       Order[]
+  PointRecord PointRecord[]
 }

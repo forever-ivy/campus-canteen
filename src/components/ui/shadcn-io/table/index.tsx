@@ -160,7 +160,7 @@ export function TableColumnHeader<TData, TValue>({
   }
 
   return (
-    <div className={cn("flex items-center space-x-2", className)}>
+    <div className={cn("flex items-center space-x-2 m-2", className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -181,11 +181,11 @@ export function TableColumnHeader<TData, TValue>({
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={handleSortAsc}>
             <ArrowUpIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
-            Asc
+            升序
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleSortDesc}>
             <ArrowDownIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
-            Desc
+            降序
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
