@@ -45,8 +45,12 @@ export default function Component({ order }: ComponentProps) {
     fetchOrderDetails();
   }, [order.id]);
 
-  const formattime = (time: string) => {
-    const date = new Date(time);
+  const formattime = (time: string | null | undefined) => {
+    if (!time) return <p className="font-sans">-</p>;
+    const normalized =
+      typeof time === "string" ? time.replace("t", "T").replace("z", "Z") : "";
+    const date = new Date(normalized);
+    if (Number.isNaN(date.getTime())) return <p className="font-sans">-</p>;
     const formatted = new Intl.DateTimeFormat("zh-CN", {
       year: "numeric",
       month: "2-digit",
@@ -59,7 +63,7 @@ export default function Component({ order }: ComponentProps) {
     })
       .format(date)
       .replace(/\//g, "-");
-    return <p className="font-sans ">{formatted} </p>;
+    return <p className="font-sans">{formatted}</p>;
   };
 
   const router = useRouter();
@@ -102,7 +106,7 @@ export default function Component({ order }: ComponentProps) {
             </div>
             <div>
               <p className="font-bold font-sans text-zinc-400">下单时间</p>
-              {formattime(detailOrder?.orderTime ?? "")}
+              {formattime(detailOrder?.orderTime)}
             </div>
             <div>
               <p className="font-bold font-sans text-zinc-400">档口号</p>
