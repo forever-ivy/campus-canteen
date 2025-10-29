@@ -14,6 +14,11 @@ interface OrderStore {
   loading: boolean;
   error: string | null;
   lastFetched: number | null;
+  newOrdersCount: number;
+  setSocketConnected: (connected: boolean) => void;
+  addNewOrder: (order: Order) => void;
+  incrementNewOrderCount: () => void;
+  resetNewOrderCount: () => void;
   fetchOrders: () => Promise<void>;
   refetchOrders: () => Promise<void>;
 }
@@ -23,6 +28,29 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
   loading: true,
   error: null,
   lastFetched: null,
+  newOrdersCount: 0,
+
+  // Socket 相关方法
+  setSocketConnected: (connected: boolean) => {
+    console.log("Socket 连接状态:", connected);
+  },
+
+  addNewOrder: (order: Order) => {
+    set((state) => ({
+      orders: [order, ...state.orders],
+      newOrdersCount: state.newOrdersCount + 1,
+    }));
+  },
+
+  incrementNewOrderCount: () => {
+    set((state) => ({
+      newOrdersCount: state.newOrdersCount + 1,
+    }));
+  },
+
+  resetNewOrderCount: () => {
+    set({ newOrdersCount: 0 });
+  },
 
   fetchOrders: async () => {
     const state = get();
