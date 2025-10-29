@@ -19,16 +19,27 @@ import { useSocket } from "../hooks/useSocket";
 
 export default function RightDrawer() {
   const { bellState, setBellState } = useInfoStore();
-  const { newOrdersCount, resetNewOrderCount, refetchOrders } = useOrderStore();
-  const { connected, lastMessage } = useSocket();
+  const {
+    newOrdersCount,
+    resetNewOrderCount,
+    refetchOrders,
+    incrementNewOrderCount,
+  } = useOrderStore();
+  const { connected, lastMessage, sendMessage } = useSocket();
 
   // 监听 Socket 消息，当收到新订单时自动刷新数据
   useEffect(() => {
-    if (lastMessage?.type === "new_order") {
-      console.log("检测到新订单，刷新数据...");
+    if (!lastMessage) return;
+    if (lastMessage.type === "new_order") {
+      incrementNewOrderCount();
+      console.log("检测到新订单，刷新数据并更新计数...");
       refetchOrders();
     }
-  }, [lastMessage, refetchOrders]);
+    if (lastMessage.type === "order_updated") {
+      console.log("检测到订单更新，刷新数据...");
+      refetchOrders();
+    }
+  }, [lastMessage, incrementNewOrderCount, refetchOrders]);
 
   const handleDrawerOpen = () => {
     setBellState(true);
@@ -71,9 +82,10 @@ export default function RightDrawer() {
               </DrawerTitle>
               <DrawerDescription>
                 {lastMessage
-                  ? `最新更新: ${new Date(lastMessage.timestamp).toLocaleTimeString()}`
-                  : "实时监控新订单和积分记录"
-                }
+                  ? `最新更新: ${new Date(
+                      lastMessage.timestamp
+                    ).toLocaleTimeString()}`
+                  : "实时监控新订单和积分记录"}
               </DrawerDescription>
             </DrawerHeader>
 
@@ -81,11 +93,13 @@ export default function RightDrawer() {
               {/* 连接状态 */}
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <span className="text-sm font-medium">WebSocket 连接状态</span>
-                <span className={`text-sm px-2 py-1 rounded ${
-                  connected
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}>
+                <span
+                  className={`text-sm px-2 py-1 rounded ${
+                    connected
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
                   {connected ? "已连接" : "未连接"}
                 </span>
               </div>
@@ -128,6 +142,18 @@ export default function RightDrawer() {
                   onClick={() => resetNewOrderCount()}
                 >
                   重置计数
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    sendMessage("new_order", {
+                      orderId: `${Date.now()}`,
+                      from: "drawer-test",
+                    })
+                  }
+                >
+                  模拟新订单
                 </Button>
               </div>
 
