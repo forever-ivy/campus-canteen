@@ -40,8 +40,6 @@ export interface OrderListItem {
 
 // /api/orders 返回结构
 export interface OrderListResponse {
-  page: number;
-  pageSize: number;
   total: number;
   items: OrderListItem[];
 }

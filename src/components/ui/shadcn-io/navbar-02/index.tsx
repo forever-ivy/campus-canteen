@@ -101,29 +101,30 @@ export interface Navbar02Props extends React.HTMLAttributes<HTMLElement> {
 // Default navigation links
 const defaultNavigationLinks: Navbar02NavItem[] = [
   { href: "/dashboard", label: "主页" },
-  {
-    label: "深度分析",
-    submenu: true,
-    type: "description",
-    items: [
-      {
-        href: "/analytics/menu",
-        label: "菜单分析",
-        description: "分析菜品销量、销售额和受欢迎程度。",
-      },
-      {
-        href: "/analytics/merchants",
-        label: "商家分析",
-        description: "评估各档口表现，查看商家排行榜。",
-      },
-      {
-        href: "/analytics/sales",
-        label: "销售趋势",
-        description: "查看今日、本周、本月的销售趋势图。",
-      },
-    ],
-  },
+  // {
+  //   label: "深度分析",
+  //   submenu: true,
+  //   type: "description",
+  //   items: [
+  //     {
+  //       href: "/analytics/menu",
+  //       label: "菜单分析",
+  //       description: "分析菜品销量、销售额和受欢迎程度。",
+  //     },
+  //     {
+  //       href: "/analytics/merchants",
+  //       label: "商家分析",
+  //       description: "评估各档口表现，查看商家排行榜。",
+  //     },
+  //     {
+  //       href: "/analytics/sales",
+  //       label: "销售趋势",
+  //       description: "查看今日、本周、本月的销售趋势图。",
+  //     },
+  //   ],
+  // },
   { href: "/order", label: "订单管理" },
+  { href: "/transcation  ", label: "流水展示" },
 ];
 
 export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
@@ -133,12 +134,6 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
       logo = <Logo />,
       logoHref = "/",
       navigationLinks = defaultNavigationLinks,
-      signInText = "Sign In",
-      signInHref = "#signin",
-      ctaText = "Get Started",
-      ctaHref = "#get-started",
-      onSignInClick,
-      onCtaClick,
       ...props
     },
     ref
@@ -211,7 +206,7 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
                     <NavigationMenuList className="flex-col items-start gap-0">
                       {navigationLinks.map((link, index) => (
                         <NavigationMenuItem key={index} className="w-full">
-                          {link.submenu ? (
+                          {/* {link.submenu ? (
                             <>
                               <div className="text-muted-foreground px-2 py-1.5 text-xs font-medium">
                                 {link.label}
@@ -234,19 +229,19 @@ export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(
                                 ))}
                               </ul>
                             </>
-                          ) : (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                if (link.href) {
-                                  router.push(link.href);
-                                }
-                              }}
-                              className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer no-underline"
-                            >
-                              {link.label}
-                            </button>
-                          )}
+                          ) : ( */}
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (link.href) {
+                                router.push(link.href);
+                              }
+                            }}
+                            className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer no-underline"
+                          >
+                            {link.label}
+                          </button>
+                          {/* )} */}
                           {/* Add separator between different types of items */}
                           {index < navigationLinks.length - 1 &&
                             ((!link.submenu &&
