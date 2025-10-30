@@ -2,6 +2,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { io, Socket } from "socket.io-client";
+import axios from "axios";
 
 interface SocketData {
   type: "new_order" | "new_points" | "order_updated";
@@ -27,7 +28,7 @@ export function useSocket() {
     // 先触发服务端初始化（pages/api/socket.ts），完成后再连接
     void (async () => {
       try {
-        await fetch("/api/socket");
+        await axios.get("/api/socket");
       } catch {
         // 初始化接口失败时忽略，Socket.IO 会继续尝试连接
       }

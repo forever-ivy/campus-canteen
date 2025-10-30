@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import axios from 'axios';
 
 type Order = {
@@ -15,54 +16,81 @@ interface OrderStore {
   error: string | null;
   lastFetched: number | null;
   newOrdersCount: number;
+  // 分页状态
+  pageIndex: number;
+  pageSize: number;
+  globalFilter: string;
   setSocketConnected: (connected: boolean) => void;
   addNewOrder: (order: Order) => void;
   incrementNewOrderCount: () => void;
   resetNewOrderCount: () => void;
   fetchOrders: () => Promise<void>;
   refetchOrders: () => Promise<void>;
+  // 分页状态管理方法
+  setPageIndex: (pageIndex: number) => void;
+  setPageSize: (pageSize: number) => void;
+  setGlobalFilter: (filter: string) => void;
 }
 
-export const useOrderStore = create<OrderStore>((set, get) => ({
-  orders: [],
-  loading: true,
-  error: null,
-  lastFetched: null,
-  newOrdersCount: 0,
+export const useOrderStore = create<OrderStore>()(
+  persist(
+    (set, get) => ({
+      orders: [],
+      loading: true,
+      error: null,
+      lastFetched: null,
+      newOrdersCount: 0,
+      // 分页状态初始值
+      pageIndex: 0,
+      pageSize: 5,
+      globalFilter: '',
 
-  // Socket 相关方法
-  setSocketConnected: (connected: boolean) => {
-    console.log("Socket 连接状态:", connected);
-  },
+      // Socket 相关方法
+      setSocketConnected: (connected: boolean) => {
+        console.log("Socket 连接状态:", connected);
+      },
 
-  addNewOrder: (order: Order) => {
-    set((state) => ({
-      orders: [order, ...state.orders],
-      newOrdersCount: state.newOrdersCount + 1,
-    }));
-  },
+      addNewOrder: (order: Order) => {
+        set((state) => ({
+          orders: [order, ...state.orders],
+          newOrdersCount: state.newOrdersCount + 1,
+        }));
+      },
 
-  incrementNewOrderCount: () => {
-    set((state) => ({
-      newOrdersCount: state.newOrdersCount + 1,
-    }));
-  },
+      incrementNewOrderCount: () => {
+        set((state) => ({
+          newOrdersCount: state.newOrdersCount + 1,
+        }));
+      },
 
-  resetNewOrderCount: () => {
-    set({ newOrdersCount: 0 });
-  },
+      resetNewOrderCount: () => {
+        set({ newOrdersCount: 0 });
+      },
 
-  fetchOrders: async () => {
-    const state = get();
+      // 分页状态管理方法
+      setPageIndex: (pageIndex: number) => {
+        set({ pageIndex });
+      },
 
-    // 如果数据是最近5分钟内获取的，直接返回，不重新请求
-    if (state.lastFetched && Date.now() - state.lastFetched < 5 * 60 * 1000) {
-      set({ loading: false });
-      return;
-    }
+      setPageSize: (pageSize: number) => {
+        set({ pageSize, pageIndex: 0 }); // 改变页面大小时重置到第一页
+      },
 
-    try {
-      set({ loading: true, error: null });
+      setGlobalFilter: (globalFilter: string) => {
+        set({ globalFilter, pageIndex: 0 }); // 搜索时重置到第一页
+      },
+
+      fetchOrders: async () => {
+        const state = get();
+
+        // 如果数据是最近5分钟内获取的，直接返回，不重新请求
+        if (state.lastFetched && Date.now() - state.lastFetched < 5 * 60 * 1000) {
+          set({ loading: false });
+          return;
+        }
+
+        try {
+          set({ loading: true, error: null });
       const response = await axios.get("/api/orders");
       const normalized: Order[] = (response.data?.items ?? []).map(
         (item: Record<string, unknown>) => {
@@ -122,4 +150,14 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
     set({ lastFetched: null });
     await get().fetchOrders();
   },
-}));
+}),
+{
+  name: 'order-store', // 存储在 localStorage 中的键名
+  partialize: (state) => ({
+    pageIndex: state.pageIndex,
+    pageSize: state.pageSize,
+    globalFilter: state.globalFilter,
+  }), // 只持久化分页相关的状态
+}
+)
+);

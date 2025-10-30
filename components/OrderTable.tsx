@@ -112,14 +112,22 @@ export const columns: ColumnDef<Order>[] = [
   },
 ];
 export default function OrderTable() {
-  const { fetchOrders, orders } = useOrderStore();
+  const { 
+    fetchOrders, 
+    orders, 
+    pageIndex, 
+    pageSize, 
+    globalFilter,
+    setPageIndex,
+    setPageSize,
+    setGlobalFilter
+  } = useOrderStore();
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState<string>("");
 
   const table = useReactTable({
     data: orders,
@@ -130,14 +138,23 @@ export default function OrderTable() {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     columnResizeMode: "onChange",
-    initialState: {
-      pagination: {
-        pageSize: 5,
-      },
-    },
     state: {
       columnFilters,
       globalFilter,
+      pagination: {
+        pageIndex,
+        pageSize,
+      },
+    },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const newPagination = updater({ pageIndex, pageSize });
+        setPageIndex(newPagination.pageIndex);
+        setPageSize(newPagination.pageSize);
+      } else {
+        setPageIndex(updater.pageIndex);
+        setPageSize(updater.pageSize);
+      }
     },
     // 在"订单号"或"学生姓名"任意字段匹配到输入内容即通过
     globalFilterFn: (row, _columnId, filterValue) => {
@@ -234,29 +251,29 @@ export default function OrderTable() {
           <div className="flex items-center space-x-2">
             <p className="text-sm font-sans">每页行数</p>
             <select
-              value={table.getState().pagination.pageSize}
+              value={pageSize}
               onChange={(e) => {
-                table.setPageSize(Number(e.target.value));
+                setPageSize(Number(e.target.value));
               }}
               className="h-8 w-[70px] rounded border border-input bg-background px-3 py-1 text-sm"
             >
-              {[5, 10, 20, 30, 40].map((pageSize) => (
-                <option key={pageSize} value={pageSize}>
-                  {pageSize}
+              {[5, 10, 20, 30, 40].map((size) => (
+                <option key={size} value={size}>
+                  {size}
                 </option>
               ))}
             </select>
           </div>
           <div className="flex items-center space-x-6 lg:space-x-8">
             <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              Page {pageIndex + 1} of{" "}
               {table.getPageCount()}
             </div>
             <div className="flex items-center space-x-2 font-sans">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => table.setPageIndex(0)}
+                onClick={() => setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
               >
                 首页
@@ -264,7 +281,7 @@ export default function OrderTable() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => table.previousPage()}
+                onClick={() => setPageIndex(pageIndex - 1)}
                 disabled={!table.getCanPreviousPage()}
               >
                 上一页
@@ -272,7 +289,7 @@ export default function OrderTable() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => table.nextPage()}
+                onClick={() => setPageIndex(pageIndex + 1)}
                 disabled={!table.getCanNextPage()}
               >
                 下一页
@@ -280,7 +297,7 @@ export default function OrderTable() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                onClick={() => setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
               >
                 尾页
