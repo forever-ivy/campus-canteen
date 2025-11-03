@@ -1,9 +1,34 @@
-import { Suspense } from "react";
+"use client";
+
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Table from "../../components/Table";
 import { SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 const Order = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const [keyword, setKeyword] = useState<string>("");
+
+  // 初始化：从URL读取 q 参数到输入框
+  useEffect(() => {
+    const q = searchParams.get("q") ?? "";
+    setKeyword(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const updateQuery = (next: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(next).forEach(([k, v]) => {
+      if (v === null || v === "") params.delete(k);
+      else params.set(k, v);
+    });
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   return (
     <div className=" w-full h-full flex-col ">
       <div className="flex-col justify-start items-center my-8 mx-10 ">
@@ -19,6 +44,19 @@ const Order = () => {
             type="search"
             placeholder="输入订单号或学生 ID搜索"
             className="pl-10"
+            value={keyword}
+            onChange={(e) => {
+              const v = e.target.value;
+              setKeyword(v);
+              // 实时更新URL中的 q 参数
+              updateQuery({ q: v || null, page: "1" });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setKeyword("");
+                updateQuery({ q: null, page: "1" });
+              }
+            }}
           />
         </div>
       </div>

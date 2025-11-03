@@ -58,6 +58,8 @@ export default function DataTablePagination() {
     void fetchLocations();
   }, [fetchLocations]);
 
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
@@ -69,6 +71,10 @@ export default function DataTablePagination() {
         const params = new URLSearchParams();
         if (currentLocation) {
           params.set("location", currentLocation);
+        }
+        const q = searchParams.get("q");
+        if (q && q.trim().length > 0) {
+          params.set("q", q.trim());
         }
         const query = params.size ? `?${params.toString()}` : "";
         const response = await fetch(`/api/orders${query}`, {
@@ -110,7 +116,7 @@ export default function DataTablePagination() {
       cancelled = true;
       controller.abort();
     };
-  }, [currentLocation]);
+  }, [currentLocation, searchParams]);
 
   const columns = useMemo<ColumnDef<OrderTableRow>[]>(
     () => [
@@ -184,10 +190,10 @@ export default function DataTablePagination() {
 
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pageParams = useSearchParams();
 
-  const page = searchParams.get("page") ?? "1";
-  const pageSize = searchParams.get("pageSize") ?? "5";
+  const page = pageParams.get("page") ?? "1";
+  const pageSize = pageParams.get("pageSize") ?? "5";
 
   const pagination = useMemo(() => ({
     pageIndex: Number(page) - 1,
@@ -196,7 +202,7 @@ export default function DataTablePagination() {
 
   const createQueryString = useCallback(
     (params: Record<string, string | number | null>) => {
-      const newSearchParams = new URLSearchParams(searchParams.toString());
+      const newSearchParams = new URLSearchParams(pageParams.toString());
       for (const [key, value] of Object.entries(params)) {
         if (value === null) {
           newSearchParams.delete(key);
@@ -206,7 +212,7 @@ export default function DataTablePagination() {
       }
       return newSearchParams.toString();
     },
-    [searchParams]
+    [pageParams]
   );
 
   const table = useReactTable({
@@ -232,13 +238,13 @@ export default function DataTablePagination() {
   });
 
   useEffect(() => {
-    const pageFromUrl = Number(searchParams.get('page') ?? 1);
+    const pageFromUrl = Number(pageParams.get('page') ?? 1);
     const pageIndexFromUrl = pageFromUrl - 1;
 
     if (table.getState().pagination.pageIndex !== pageIndexFromUrl) {
       table.setPageIndex(pageIndexFromUrl);
     }
-  }, [orders, searchParams, table]);
+  }, [orders, pageParams, table]);
 
   return (
     <div className="w-full space-y-6">

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import "server-only";
 
-import sql from "mssql";
+import * as sql from "mssql";
 
 declare global {
   // eslint-disable-next-line no-var

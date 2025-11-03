@@ -21,6 +21,7 @@ export async function GET(request: Request) {
     const pool = await getPool();
     const { searchParams } = new URL(request.url);
     const location = searchParams.get("location");
+    const q = searchParams.get("q");
 
     const sqlParts: string[] = [
       `
@@ -45,6 +46,19 @@ export async function GET(request: Request) {
         "WHERE LTRIM(RTRIM(Merchant.Location)) = LTRIM(RTRIM(@location))",
       );
       requestBuilder.input("location", sql.NVarChar(50), location.trim());
+    }
+
+    // 搜索：订单号、学生ID、商家名称或商家ID（模糊匹配）
+    if (q && q.trim().length > 0) {
+      const trimmed = q.trim();
+      // 如果已有 WHERE，需要加 AND；如果没有，先加 WHERE
+      if (!sqlParts.some((part) => part.trim().startsWith("WHERE"))) {
+        sqlParts.push("WHERE 1=1");
+      }
+      sqlParts.push(
+        "AND (CAST([Order].OrderID AS NVARCHAR(15)) LIKE @q OR CAST(Student.StudentID AS NVARCHAR(12)) LIKE @q OR LTRIM(RTRIM(Merchant.Name)) LIKE @q OR CAST(Merchant.MerchantID AS NVARCHAR(5)) LIKE @q)"
+      );
+      requestBuilder.input("q", sql.NVarChar, `%${trimmed}%`);
     }
 
     sqlParts.push("ORDER BY [Order].OrderTime DESC");
