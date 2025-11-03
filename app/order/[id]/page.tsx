@@ -1,7 +1,8 @@
 import Bill from "../../../components/Bill";
 
-const DetailPage = ({ params }: { params: { id: string } }) => (
-  <Bill orderId={params.id} layout="page" />
-);
+const DetailPage = async ({ params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params;
+  return <Bill orderId={id} />;
+};
 
 export default DetailPage;

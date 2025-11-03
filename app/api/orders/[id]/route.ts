@@ -40,9 +40,10 @@ type DetailRow = {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const orderId = params.id?.trim();
+  const { id } = await params;
+  const orderId = id?.trim();
   if (!orderId) {
     return NextResponse.json(
       { error: "缺少订单编号" },

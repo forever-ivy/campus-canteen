@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Table from "../../components/Table";
 import { SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -13,11 +13,9 @@ const Order = () => {
 
   const [keyword, setKeyword] = useState<string>("");
 
-  // 初始化：从URL读取 q 参数到输入框
   useEffect(() => {
     const q = searchParams.get("q") ?? "";
     setKeyword(q);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const updateQuery = (next: Record<string, string | null>) => {
@@ -42,7 +40,7 @@ const Order = () => {
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="输入订单号或学生 ID搜索"
+            placeholder="输入订单号,学生ID,档口编号进行搜索"
             className="pl-10"
             value={keyword}
             onChange={(e) => {
