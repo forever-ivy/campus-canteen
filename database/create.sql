@@ -1,1 +1,9 @@
-CREATE database canteen
+CREATE DATABASE canteen
+
+
+ALTER DATABASE [canteen] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+GO
+
+DROP DATABASE [canteen];
+GO
+

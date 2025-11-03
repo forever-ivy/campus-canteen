@@ -1,94 +1,79 @@
--- 设置数据库以支持中文（如果数据库不存在，创建时指定）
--- 注意：在实际部署时，建议在数据库创建时指定 COLLATE Chinese_PRC_CI_AS
-
+-- 表 3-1: 学生表 (Student)
 CREATE TABLE Student
 (
-    StudentID INT PRIMARY KEY,
+    StudentID CHAR(12) PRIMARY KEY,
     Name NVARCHAR(50) NOT NULL,
-    SEX NCHAR(1),
-    Major NVARCHAR(100),
-    Balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    Points INT NOT NULL DEFAULT 0,
-    CONSTRAINT CK_Student_Balance CHECK (Balance >= 0),
-    CONSTRAINT CK_Student_Points CHECK (Points >= 0),
-    CONSTRAINT CK_Student_SEX CHECK (SEX IN (N'M', N'F', N'男', N'女'))
+    Sex CHAR(1),
+    Major NVARCHAR(50),
+    Balance DECIMAL(10, 2) DEFAULT 0.00,
+    Points DECIMAL(10, 2) DEFAULT 0.00
 );
 
+-- 表 3-2: 档口表 (Merchant)
 CREATE TABLE Merchant
 (
-    MerchantID INT PRIMARY KEY,
-    Name NVARCHAR(100) NOT NULL,
-    Location NVARCHAR(100),
+    MerchantID CHAR(5) PRIMARY KEY,
+    Name NVARCHAR(50) NOT NULL,
+    Location NVARCHAR(50),
     Manager NVARCHAR(50)
 );
 
+-- 表 3-3: 菜品表 (Dish)
 CREATE TABLE Dish
 (
-    DishID INT PRIMARY KEY,
-    Name NVARCHAR(100) NOT NULL,
+    DishID CHAR(8) PRIMARY KEY,
+    Name NVARCHAR(50) NOT NULL,
     Price DECIMAL(8, 2) NOT NULL,
-    Stock INT NOT NULL DEFAULT 0,
-    MerchantID INT NOT NULL,
-    CONSTRAINT FK_Dish_Merchant FOREIGN KEY (MerchantID) REFERENCES Merchant(MerchantID) ON DELETE NO ACTION,
-    CONSTRAINT CK_Dish_Price CHECK (Price > 0),
-    CONSTRAINT CK_Dish_Stock CHECK (Stock >= 0)
+    MerchantID CHAR(5) NOT NULL,
+    FOREIGN KEY(MerchantID) REFERENCES Merchant(MerchantID)
 );
 
+-- 表 3-4: 库存表 (Stock)
+CREATE TABLE Stock
+(
+    StockID CHAR(12) PRIMARY KEY,
+    MerchantID CHAR(5) NOT NULL,
+    DishID CHAR(8) NOT NULL,
+    InQuantity INT DEFAULT 0,
+    OutQuantity INT DEFAULT 0,
+    RemainingQuantity INT DEFAULT 0,
+    UpdateTime DATETIME,
+    FOREIGN KEY(MerchantID) REFERENCES Merchant(MerchantID),
+    FOREIGN KEY(DishID) REFERENCES Dish(DishID)
+);
+
+-- 表 3-5: 订单表 (Order)
+-- 注意: 'Order' 是 SQL 的保留关键字, 建议使用方括号 [] 或将其命名为 Orders
 CREATE TABLE [Order]
 (
-    OrderID BIGINT PRIMARY KEY,
-    StudentID INT NOT NULL,
-    MerchantID INT NOT NULL,
-    OrderTime DATETIME NOT NULL DEFAULT GETDATE(),
+    OrderID CHAR(15) PRIMARY KEY,
+    StudentID CHAR(12) NOT NULL,
+    MerchantID CHAR(5) NOT NULL,
+    OrderTime DATETIME NOT NULL,
     TotalAmount DECIMAL(10, 2) NOT NULL,
-    Status NVARCHAR(20) NOT NULL,
-    CONSTRAINT FK_Order_Student FOREIGN KEY (StudentID) REFERENCES Student(StudentID) ON DELETE CASCADE,
-    CONSTRAINT FK_Order_Merchant FOREIGN KEY (MerchantID) REFERENCES Merchant(MerchantID) ON DELETE NO ACTION,
-    CONSTRAINT CK_Order_TotalAmount CHECK (TotalAmount >= 0),
-    CONSTRAINT CK_Order_Status CHECK (Status IN (N'待支付', N'已支付', N'已取餐', N'已完成', N'已退款'))
+    [Status] NVARCHAR(10) NOT NULL CHECK ([Status] IN (N'待支付', N'已完成')),
+    FOREIGN KEY(StudentID) REFERENCES Student(StudentID),
+    FOREIGN KEY(MerchantID) REFERENCES Merchant(MerchantID)
 );
 
+-- 表 3-6: 支付方式表 (Payment)
+CREATE TABLE Payment
+(
+    PayID CHAR(15) PRIMARY KEY,
+    OrderID CHAR(15) NOT NULL,
+    PayMethod NVARCHAR(10) NOT NULL CHECK (PayMethod IN (N'微信', N'支付宝', N'校园卡')),
+    Amount DECIMAL(10, 2) NOT NULL,
+    PayTime DATETIME NOT NULL,
+    FOREIGN KEY(OrderID) REFERENCES [Order](OrderID)
+);
+
+-- 表 3-7: 订单明细表 (OrderDetail)
 CREATE TABLE OrderDetail
 (
-    OrderID BIGINT NOT NULL,
-    DishID INT NOT NULL,
+    OrderID CHAR(15) NOT NULL,
+    DishID CHAR(8) NOT NULL,
     Quantity INT NOT NULL,
-    Subtotal DECIMAL(10, 2) NOT NULL,
-    CONSTRAINT PK_OrderDetail PRIMARY KEY (OrderID, DishID),
-    -- 联合主键
-    CONSTRAINT FK_OrderDetail_Order FOREIGN KEY (OrderID) REFERENCES [Order](OrderID) ON DELETE CASCADE,
-    CONSTRAINT FK_OrderDetail_Dish FOREIGN KEY (DishID) REFERENCES Dish(DishID) ON DELETE NO ACTION,
-    CONSTRAINT CK_OrderDetail_Quantity CHECK (Quantity > 0)
+    PRIMARY KEY(OrderID, DishID),
+    FOREIGN KEY(OrderID) REFERENCES [Order](OrderID),
+    FOREIGN KEY(DishID) REFERENCES Dish(DishID)
 );
-
-
-CREATE TABLE PaymentMethod
-(
-    PayID BIGINT PRIMARY KEY IDENTITY(1,1),
-    -- 主键自增
-    OrderID BIGINT NOT NULL,
-    PayMethod NVARCHAR(50) NOT NULL,
-    Amount DECIMAL(10, 2) NOT NULL,
-    PayTime DATETIME NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT FK_PaymentMethod_Order FOREIGN KEY (OrderID) REFERENCES [Order](OrderID) ON DELETE CASCADE,
-    CONSTRAINT CK_PaymentMethod_Amount CHECK (Amount > 0),
-    CONSTRAINT CK_PaymentMethod_PayMethod CHECK (PayMethod IN (N'微信', N'支付宝', N'校园卡', N'现金'))
-);
-
-CREATE TABLE PointRecord
-(
-    RecordID BIGINT PRIMARY KEY IDENTITY(1,1),
-    -- 主键自增
-    StudentID INT NOT NULL,
-    OrderID BIGINT NOT NULL,
-    Points INT NOT NULL,
-    CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT UQ_PointRecord_OrderID UNIQUE (OrderID),
-    -- 保证一个订单只产生一条积分记录
-    CONSTRAINT FK_PointRecord_Student FOREIGN KEY (StudentID) REFERENCES Student(StudentID) ON DELETE NO ACTION,
-    CONSTRAINT FK_PointRecord_Order FOREIGN KEY (OrderID) REFERENCES [Order](OrderID) ON DELETE NO ACTION,
-    CONSTRAINT CK_PointRecord_Points CHECK (Points >= 0)
-);
-
-
-
