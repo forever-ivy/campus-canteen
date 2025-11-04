@@ -52,9 +52,27 @@ export default function MerchantLogin() {
     }
   };
 
+  const Logo = (props: React.ImgHTMLAttributes<HTMLImageElement>) => {
+    return (
+      <img
+        src="/ysu-logo.png"
+        alt="YSU Logo"
+        className="w-16 h-16"
+        style={{
+          filter:
+            "brightness(0) saturate(100%) invert(20%) sepia(100%) saturate(3500%) hue-rotate(210deg) brightness(90%) contrast(105%)",
+        }}
+        {...props}
+      />
+    );
+  };
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
+        <div className="flex items-center justify-center my-3">
+          <Logo />
+        </div>
         <CardTitle>商家登录</CardTitle>
         <CardDescription>请输入您的档口编号和密码</CardDescription>
       </CardHeader>

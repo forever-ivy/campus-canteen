@@ -62,7 +62,7 @@ export function BackgroundPaths({
   const router = useRouter();
 
   const handleClick = () => {
-    router.push("/dashboard");
+    router.push("/order");
   };
 
   return (

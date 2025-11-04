@@ -100,30 +100,30 @@ export interface Navbar02Props extends React.HTMLAttributes<HTMLElement> {
 
 // Default navigation links
 const defaultNavigationLinks: Navbar02NavItem[] = [
-  { href: "/dashboard", label: "主页" },
-  {
-    label: "深度分析",
-    submenu: true,
-    type: "description",
-    items: [
-      {
-        href: "/analytics/menu",
-        label: "菜单分析",
-        description: "分析菜品销量、销售额和受欢迎程度。",
-      },
-      {
-        href: "/analytics/merchants",
-        label: "商家分析",
-        description: "评估各档口表现，查看商家排行榜。",
-      },
-      {
-        href: "/analytics/sales",
-        label: "销售趋势",
-        description: "查看今日、本周、本月的销售趋势图。",
-      },
-    ],
-  },
-  { href: "/order", label: "订单管理" },
+  // { href: "/dashboard", label: "主页" },
+  // {
+  //   label: "深度分析",
+  //   submenu: true,
+  //   type: "description",
+  //   items: [
+  //     {
+  //       href: "/analytics/menu",
+  //       label: "菜单分析",
+  //       description: "分析菜品销量、销售额和受欢迎程度。",
+  //     },
+  //     {
+  //       href: "/analytics/merchants",
+  //       label: "商家分析",
+  //       description: "评估各档口表现，查看商家排行榜。",
+  //     },
+  //     {
+  //       href: "/analytics/sales",
+  //       label: "销售趋势",
+  //       description: "查看今日、本周、本月的销售趋势图。",
+  //     },
+  //   ],
+  // },
+  // { href: "/order", label: "订单管理" },
 ];
 
 export const Navbar02 = React.forwardRef<HTMLElement, Navbar02Props>(

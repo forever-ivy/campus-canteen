@@ -62,7 +62,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // 查询商家信息
+    // 查询功能：验证商家登录并获取档口信息
+    // 涉及表：Merchant（档口表）
+    // 作用：通过档口编号查询档口的基本信息（名称、位置、负责人、联系电话）
+    // 验证规则：密码为 ysu + 档口编号（5位）
     const pool = await getPool();
     const result = await pool
       .request()
@@ -74,14 +77,15 @@ export async function POST(request: Request) {
         Manager: string | null;
         Phone: string | null;
       }>(`
+        -- 查询商家（档口）基本信息用于登录验证
         SELECT
-          MerchantID,
-          MName,
-          Location,
-          Manager,
-          Phone
+          MerchantID,     -- 档口编号
+          MName,          -- 档口名称
+          Location,       -- 档口位置
+          Manager,        -- 负责人姓名
+          Phone           -- 联系电话
         FROM Merchant
-        WHERE MerchantID = @merchantId
+        WHERE MerchantID = @merchantId  -- 根据档口编号精确匹配
       `);
 
     if (result.recordset.length === 0) {

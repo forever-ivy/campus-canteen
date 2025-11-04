@@ -267,14 +267,14 @@ const Bill: React.FC<BillProps> = ({ orderId }) => {
               </CardContent>
             </Card>
 
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle>菜品推荐</CardTitle>
               </CardHeader>
               <CardContent className="py-6">
                 <DishesPic />
               </CardContent>
-            </Card>
+            </Card> */}
 
             <Card>
               <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -353,15 +353,12 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({
     setError(null);
   }, [order]);
 
-  const handleOpenChange = React.useCallback(
-    (open: boolean) => {
-      setIsModalOpen(open);
-      if (!open) {
-        setError(null);
-      }
-    },
-    []
-  );
+  const handleOpenChange = React.useCallback((open: boolean) => {
+    setIsModalOpen(open);
+    if (!open) {
+      setError(null);
+    }
+  }, []);
 
   React.useEffect(() => {
     if (!isModalOpen) {

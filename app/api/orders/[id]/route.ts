@@ -44,88 +44,44 @@ const ORDER_STATUS_SET = new Set<OrderStatus>(["待支付", "已完成"]);
 const trimOrNull = (value: string | null | undefined) =>
   value ? value.trim() : null;
 
-const isMissingTableError = (err: unknown) => {
-  if (!(err instanceof Error)) return false;
-  const message = err.message;
-  return (
-    /Invalid object name/i.test(message) ||
-    /对象名.*无效/.test(message) ||
-    /invalid object name/i.test(message)
-  );
-};
-
 async function queryPaymentRows(
   pool: sql.ConnectionPool,
   orderId: string
 ): Promise<PaymentRow[]> {
-  const buildRequest = () => {
-    const request = pool.request();
-    request.input("orderId", orderId);
-    return request;
-  };
+  // 查询功能：获取指定订单的所有支付记录
+  // 涉及表：PaymentMethod（支付方式表）
+  // 作用：查询该订单的支付ID、支付方式、支付金额、支付时间
+  const request = pool.request();
+  request.input("orderId", orderId);
 
-  try {
-    // 查询功能：获取指定订单的所有支付记录
-    // 涉及表：PaymentMethod（支付方式表）
-    // 作用：查询该订单的支付ID、支付方式、支付金额、支付时间
-    const result = await buildRequest().query<PaymentRow>(`
-        -- 查询指定订单的支付记录
-        SELECT
-          PaymentMethod.PayID,       -- 支付记录ID
-          PaymentMethod.PayMethod,   -- 支付方式（微信/支付宝/校园卡）
-          PaymentMethod.Amount,      -- 支付金额
-          PaymentMethod.PayTime      -- 支付时间
-        FROM PaymentMethod
-        WHERE PaymentMethod.OrderID = @orderId
-        ORDER BY PaymentMethod.PayTime DESC  -- 按支付时间降序排列
-      `);
-    return result.recordset;
-  } catch (err) {
-    if (!isMissingTableError(err)) {
-      throw err;
-    }
-  }
+  const result = await request.query<PaymentRow>(`
+    -- 查询指定订单的支付记录
+    SELECT
+      PaymentMethod.PayID,       -- 支付记录ID
+      PaymentMethod.PayMethod,   -- 支付方式（微信/支付宝/校园卡）
+      PaymentMethod.Amount,      -- 支付金额
+      PaymentMethod.PayTime      -- 支付时间
+    FROM PaymentMethod
+    WHERE PaymentMethod.OrderID = @orderId
+    ORDER BY PaymentMethod.PayTime DESC  -- 按支付时间降序排列
+  `);
 
-  // 备用查询：如果 PaymentMethod 表不存在，尝试查询 Payment 表
-  const fallbackResult = await buildRequest().query<PaymentRow>(`
-      -- 备用查询：从 Payment 表获取支付记录
-      SELECT
-        Payment.PayID,
-        Payment.PayMethod,
-        Payment.Amount,
-        Payment.PayTime
-      FROM Payment
-      WHERE Payment.OrderID = @orderId
-      ORDER BY Payment.PayTime DESC
-    `);
-
-  return fallbackResult.recordset;
+  return result.recordset;
 }
 
 async function deletePayments(
   transaction: sql.Transaction,
   orderId: string
 ): Promise<void> {
-  const buildRequest = () => {
-    const request = new sql.Request(transaction);
-    request.input("orderId", orderId);
-    return request;
-  };
+  // 删除功能：删除指定订单的所有支付记录
+  // 涉及表：PaymentMethod（支付方式表）
+  // 作用：在删除订单之前，先删除该订单关联的所有支付记录
+  const request = new sql.Request(transaction);
+  request.input("orderId", orderId);
 
-  try {
-    // 删除功能：删除指定订单的所有支付记录
-    // 涉及表：PaymentMethod（支付方式表）
-    // 作用：在删除订单之前，先删除该订单关联的所有支付记录
-    await buildRequest().query(
-      "-- 删除操作：删除指定订单的支付记录\nDELETE FROM PaymentMethod WHERE PaymentMethod.OrderID = @orderId"
-    );
-  } catch (err) {
-    if (!isMissingTableError(err)) {
-      throw err;
-    }
-    // 备用删除：如果 PaymentMethod 表不存在，尝试从 Payment 表删除
-    await buildRequest().query("DELETE FROM Payment WHERE Payment.OrderID = @orderId");
-  }
+  await request.query(
+    "-- 删除操作：删除指定订单的支付记录\nDELETE FROM PaymentMethod WHERE PaymentMethod.OrderID = @orderId"
+  );
 }
 
 async function fetchOrderDetail(
@@ -182,19 +138,15 @@ async function fetchOrderDetail(
       ORDER BY Dish.DName  -- 按菜品名称排序
     `);
 
-  const payments: OrderPaymentEntry[] = paymentsResult.map(
-    (payment) => ({
-      payId: payment.PayID.trim(),
-      payMethod: payment.PayMethod.trim(),
-      amount:
-        typeof payment.Amount === "number"
-          ? payment.Amount
-          : Number(payment.Amount ?? 0),
-      payTime: payment.PayTime
-        ? new Date(payment.PayTime).toISOString()
-        : null,
-    })
-  );
+  const payments: OrderPaymentEntry[] = paymentsResult.map((payment) => ({
+    payId: payment.PayID.trim(),
+    payMethod: payment.PayMethod.trim(),
+    amount:
+      typeof payment.Amount === "number"
+        ? payment.Amount
+        : Number(payment.Amount ?? 0),
+    payTime: payment.PayTime ? new Date(payment.PayTime).toISOString() : null,
+  }));
 
   const details: OrderDetailItem[] = detailsResult.recordset.map((detail) => {
     const price =
@@ -214,9 +166,8 @@ async function fetchOrderDetail(
   });
 
   const statusRaw = (trimOrNull(orderRow.Status) as OrderStatus | null) ?? null;
-  const normalizedStatus: OrderStatus = statusRaw && ORDER_STATUS_SET.has(statusRaw)
-    ? statusRaw
-    : "待支付";
+  const normalizedStatus: OrderStatus =
+    statusRaw && ORDER_STATUS_SET.has(statusRaw) ? statusRaw : "待支付";
 
   return {
     orderId: orderRow.OrderID.trim(),
@@ -312,7 +263,10 @@ export async function PATCH(
 
   let normalizedStatus: OrderStatus | undefined;
   if (status !== undefined) {
-    if (typeof status !== "string" || !ORDER_STATUS_SET.has(status as OrderStatus)) {
+    if (
+      typeof status !== "string" ||
+      !ORDER_STATUS_SET.has(status as OrderStatus)
+    ) {
       return NextResponse.json(
         { error: "订单状态无效" },
         { status: 400, statusText: "Bad Request" }
@@ -456,7 +410,10 @@ export async function DELETE(
       "-- 删除操作：删除订单主记录\nDELETE FROM [Order] WHERE [Order].OrderID = @orderId"
     );
 
-    if (!deleteOrderResult.rowsAffected || deleteOrderResult.rowsAffected[0] === 0) {
+    if (
+      !deleteOrderResult.rowsAffected ||
+      deleteOrderResult.rowsAffected[0] === 0
+    ) {
       await transaction.rollback();
       return NextResponse.json(
         { error: "未找到对应订单" },
