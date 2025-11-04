@@ -45,7 +45,7 @@ export async function GET(request: Request) {
       sqlParts.push(
         "WHERE LTRIM(RTRIM(Merchant.Location)) = LTRIM(RTRIM(@location))",
       );
-      requestBuilder.input("location", sql.NVarChar(50), location.trim());
+      requestBuilder.input("location", location.trim());
     }
 
     // 搜索：订单号、学生ID、商家名称或商家ID（模糊匹配）
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
       sqlParts.push(
         "AND (CAST([Order].OrderID AS NVARCHAR(15)) LIKE @q OR CAST(Student.StudentID AS NVARCHAR(12)) LIKE @q OR LTRIM(RTRIM(Merchant.MName)) LIKE @q OR CAST(Merchant.MerchantID AS NVARCHAR(5)) LIKE @q)"
       );
-      requestBuilder.input("q", sql.NVarChar(100), `%${trimmed}%`);
+      requestBuilder.input("q", `%${trimmed}%`);
     }
 
     sqlParts.push("ORDER BY [Order].OrderTime DESC");
