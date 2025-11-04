@@ -23,16 +23,19 @@ export async function GET(request: Request) {
     const location = searchParams.get("location");
     const q = searchParams.get("q");
 
+    // 构建 SQL 查询语句：查询订单列表，包含学生和档口信息
     const sqlParts: string[] = [
       `
+      -- 查询功能：获取订单列表，联表查询学生姓名和档口信息
+      -- 涉及表：[Order]（订单表）、Student（学生表）、Merchant（档口表）
       SELECT
-        [Order].OrderID,
-        [Order].OrderTime,
-        [Order].TotalAmount,
-        [Order].[Status],
-        Student.SName AS StudentName,
-        Merchant.MName AS MerchantName,
-        Merchant.Location
+        [Order].OrderID,           -- 订单编号
+        [Order].OrderTime,         -- 下单时间
+        [Order].TotalAmount,       -- 订单总金额
+        [Order].[Status],          -- 订单状态（待支付/已完成）
+        Student.SName AS StudentName,    -- 学生姓名
+        Merchant.MName AS MerchantName,  -- 档口名称
+        Merchant.Location          -- 档口位置
       FROM [Order]
       INNER JOIN Student ON Student.StudentID = [Order].StudentID
       INNER JOIN Merchant ON Merchant.MerchantID = [Order].MerchantID
@@ -41,27 +44,31 @@ export async function GET(request: Request) {
 
     const requestBuilder = pool.request();
 
+    // 条件过滤：按档口位置筛选订单
     if (location) {
       sqlParts.push(
+        "-- 筛选条件：按档口位置精确匹配",
         "WHERE LTRIM(RTRIM(Merchant.Location)) = LTRIM(RTRIM(@location))",
       );
       requestBuilder.input("location", location.trim());
     }
 
-    // 搜索：订单号、学生ID、商家名称或商家ID（模糊匹配）
+    // 条件过滤：全局搜索功能，支持订单号、学生ID、档口名称、档口ID的模糊匹配
     if (q && q.trim().length > 0) {
       const trimmed = q.trim();
-      // 如果已有 WHERE，需要加 AND；如果没有，先加 WHERE
+      // 如果已有 WHERE 子句，需要加 AND；如果没有，先添加 WHERE 1=1
       if (!sqlParts.some((part) => part.trim().startsWith("WHERE"))) {
         sqlParts.push("WHERE 1=1");
       }
       sqlParts.push(
+        "-- 搜索条件：支持订单号、学生ID、档口名称、档口ID的模糊查询（LIKE %关键词%）",
         "AND (CAST([Order].OrderID AS NVARCHAR(15)) LIKE @q OR CAST(Student.StudentID AS NVARCHAR(12)) LIKE @q OR LTRIM(RTRIM(Merchant.MName)) LIKE @q OR CAST(Merchant.MerchantID AS NVARCHAR(5)) LIKE @q)"
       );
       requestBuilder.input("q", `%${trimmed}%`);
     }
 
-    sqlParts.push("ORDER BY [Order].OrderTime DESC");
+    // 排序：按下单时间倒序排列（最新订单在最前面）
+    sqlParts.push("-- 排序：按下单时间降序排列", "ORDER BY [Order].OrderTime DESC");
 
     const result = await requestBuilder.query<OrderQueryRow>(
       sqlParts.join("\n")
@@ -210,7 +217,7 @@ export async function POST(request: Request) {
     try {
       await transaction.begin();
 
-      // 生成订单ID（格式：MerchantID + YYMMDD + 序号）
+      // 生成订单ID（格式：档口ID(5位) + 年月日(6位YYMMDD) + 序号(4位)）
       const dateStr = normalizedOrderTime
         .toISOString()
         .slice(2, 10)
@@ -219,16 +226,22 @@ export async function POST(request: Request) {
       sequenceRequest.input("merchantId", sql.Char(5), merchantId.trim());
       sequenceRequest.input("datePattern", sql.NVarChar(50), `${merchantId.trim()}${dateStr}%`);
 
+      // 查询功能：获取当天该档口的最大订单序号，用于生成新的订单编号
+      // 涉及表：[Order]（订单表）
+      // 作用：找到今天该档口最后一个订单的序号，新订单序号在此基础上 +1
       const sequenceResult = await sequenceRequest.query<{ MaxSeq: number | null }>(`
-        SELECT MAX(CAST(RIGHT(OrderID, 4) AS INT)) AS MaxSeq
+        -- 查询当天该档口的最大订单序号
+        SELECT MAX(CAST(RIGHT([Order].OrderID, 4) AS INT)) AS MaxSeq
         FROM [Order]
-        WHERE OrderID LIKE @datePattern
+        WHERE [Order].OrderID LIKE @datePattern
       `);
 
       const nextSeq = (sequenceResult.recordset[0]?.MaxSeq ?? 0) + 1;
       const orderId = `${merchantId.trim()}${dateStr}${String(nextSeq).padStart(4, "0")}`;
 
-      // 插入订单
+      // 插入功能：向订单表中插入新订单记录
+      // 涉及表：[Order]（订单表）
+      // 作用：创建新订单，记录订单编号、学生ID、档口ID、下单时间、总金额、订单状态
       const orderRequest = new sql.Request(transaction);
       orderRequest.input("orderId", sql.Char(15), orderId);
       orderRequest.input("studentId", sql.Char(12), studentId.trim());
@@ -238,11 +251,14 @@ export async function POST(request: Request) {
       orderRequest.input("status", sql.NVarChar(10), normalizedStatus);
 
       await orderRequest.query(`
+        -- 增加操作：插入新订单到 [Order] 表
         INSERT INTO [Order] (OrderID, StudentID, MerchantID, OrderTime, TotalAmount, Status)
         VALUES (@orderId, @studentId, @merchantId, @orderTime, @totalAmount, @status)
       `);
 
-      // 插入订单明细
+      // 插入功能：循环插入订单明细（订单中的每个菜品）
+      // 涉及表：OrderDetail（订单明细表）
+      // 作用：记录订单中购买的每个菜品及其数量
       for (const detail of details) {
         const { dishId, quantity } = detail as { dishId: string; quantity: number };
         const detailRequest = new sql.Request(transaction);
@@ -251,6 +267,8 @@ export async function POST(request: Request) {
         detailRequest.input("quantity", sql.Int, quantity);
 
         await detailRequest.query(`
+          -- 增加操作：插入订单明细到 OrderDetail 表
+          -- 记录订单编号、菜品ID、购买数量
           INSERT INTO OrderDetail (OrderID, DishID, Quantity)
           VALUES (@orderId, @dishId, @quantity)
         `);
