@@ -1,14 +1,16 @@
-// Global database type definitions derived from database/init.sql.
+// Global database type definitions derived from the SQL files in /database.
 
 export type OrderStatus = "待支付" | "已完成";
 
 export type PaymentMethod = "微信" | "支付宝" | "校园卡";
 
+export type StudentSex = "M" | "F";
+
 export interface Student {
   studentId: string;
   name: string;
-  sex: string | null;
-  major: string | null;
+  sex: StudentSex;
+  major: string;
   balance: number;
   points: number;
 }
@@ -18,6 +20,7 @@ export interface Merchant {
   name: string;
   location: string | null;
   manager: string | null;
+  phone: string | null;
 }
 
 export type MerchantLocation = NonNullable<Merchant["location"]>;
@@ -36,7 +39,7 @@ export interface Stock {
   inQuantity: number;
   outQuantity: number;
   remainingQuantity: number;
-  updateTime: Date | null;
+  updateTime: Date;
 }
 
 export interface Order {
@@ -48,7 +51,7 @@ export interface Order {
   status: OrderStatus;
 }
 
-export interface Payment {
+export interface PaymentRecord {
   payId: string;
   orderId: string;
   payMethod: PaymentMethod;
@@ -108,6 +111,6 @@ export interface DatabaseSchema {
   Dish: Dish;
   Stock: Stock;
   Order: Order;
-  Payment: Payment;
+  PaymentMethod: PaymentRecord;
   OrderDetail: OrderDetail;
 }

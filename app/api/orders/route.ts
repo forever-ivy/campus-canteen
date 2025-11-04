@@ -12,7 +12,7 @@ type OrderQueryRow = {
   MerchantName: string;
   Location: string | null;
   TotalAmount: number | string;
-  OrderTime: Date | null;
+  OrderTime: Date | string | null;
   Status: string;
 };
 
@@ -30,8 +30,8 @@ export async function GET(request: Request) {
         [Order].OrderTime,
         [Order].TotalAmount,
         [Order].[Status],
-        Student.Name AS StudentName,
-        Merchant.Name AS MerchantName,
+        Student.SName AS StudentName,
+        Merchant.MName AS MerchantName,
         Merchant.Location
       FROM [Order]
       INNER JOIN Student ON Student.StudentID = [Order].StudentID
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
         sqlParts.push("WHERE 1=1");
       }
       sqlParts.push(
-        "AND (CAST([Order].OrderID AS NVARCHAR(15)) LIKE @q OR CAST(Student.StudentID AS NVARCHAR(12)) LIKE @q OR LTRIM(RTRIM(Merchant.Name)) LIKE @q OR CAST(Merchant.MerchantID AS NVARCHAR(5)) LIKE @q)"
+        "AND (CAST([Order].OrderID AS NVARCHAR(15)) LIKE @q OR CAST(Student.StudentID AS NVARCHAR(12)) LIKE @q OR LTRIM(RTRIM(Merchant.MName)) LIKE @q OR CAST(Merchant.MerchantID AS NVARCHAR(5)) LIKE @q)"
       );
       requestBuilder.input("q", sql.NVarChar, `%${trimmed}%`);
     }
@@ -68,16 +68,16 @@ export async function GET(request: Request) {
     );
 
     const orders: OrderTableRow[] = result.recordset.map((row) => ({
-      id: row.OrderID,
-      student: row.StudentName,
-      store: row.MerchantName,
+      id: row.OrderID.trim(),
+      student: row.StudentName.trim(),
+      store: row.MerchantName.trim(),
       location: row.Location ? row.Location.trim() : null,
       amount:
         typeof row.TotalAmount === "number"
           ? row.TotalAmount
           : Number(row.TotalAmount),
       orderedAt: row.OrderTime ? new Date(row.OrderTime).toISOString() : null,
-      status: row.Status as OrderTableRow["status"],
+      status: (row.Status ?? "").trim() as OrderTableRow["status"],
     }));
 
     return NextResponse.json({ orders });

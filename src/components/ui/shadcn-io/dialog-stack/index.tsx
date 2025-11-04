@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useControllableState } from '@radix-ui/react-use-controllable-state';
-import { Portal } from 'radix-ui';
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
+import * as Portal from "@radix-ui/react-portal";
 import type {
   ButtonHTMLAttributes,
   Dispatch,
@@ -10,7 +10,7 @@ import type {
   MouseEventHandler,
   ReactElement,
   SetStateAction,
-} from 'react';
+} from "react";
 import {
   Children,
   cloneElement,
@@ -19,8 +19,8 @@ import {
   useContext,
   useEffect,
   useState,
-} from 'react';
-import { cn } from '@/lib/utils';
+} from "react";
+import { cn } from "@/lib/utils";
 
 type DialogStackContextType = {
   activeIndex: number;
@@ -34,11 +34,11 @@ type DialogStackContextType = {
 
 const DialogStackContext = createContext<DialogStackContextType>({
   activeIndex: 0,
-  setActiveIndex: () => { },
+  setActiveIndex: () => {},
   totalDialogs: 0,
-  setTotalDialogs: () => { },
+  setTotalDialogs: () => {},
   isOpen: false,
-  setIsOpen: () => { },
+  setIsOpen: () => {},
   clickable: false,
 });
 
@@ -81,7 +81,7 @@ export const DialogStack = ({
         activeIndex,
         setActiveIndex,
         totalDialogs: 0,
-        setTotalDialogs: () => { },
+        setTotalDialogs: () => {},
         isOpen: isOpen ?? false,
         setIsOpen: (value) => setIsOpen(Boolean(value)),
         clickable,
@@ -109,7 +109,7 @@ export const DialogStackTrigger = ({
   const context = useContext(DialogStackContext);
 
   if (!context) {
-    throw new Error('DialogStackTrigger must be used within a DialogStack');
+    throw new Error("DialogStackTrigger must be used within a DialogStack");
   }
 
   const handleClick: MouseEventHandler<HTMLButtonElement> = (e) => {
@@ -135,11 +135,11 @@ export const DialogStackTrigger = ({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium text-sm',
-        'ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2',
-        'focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-        'bg-primary text-primary-foreground hover:bg-primary/90',
-        'h-10 px-4 py-2',
+        "inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium text-sm",
+        "ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2",
+        "focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "bg-primary text-primary-foreground hover:bg-primary/90",
+        "h-10 px-4 py-2",
         className
       )}
       onClick={handleClick}
@@ -159,7 +159,7 @@ export const DialogStackOverlay = ({
   const context = useContext(DialogStackContext);
 
   if (!context) {
-    throw new Error('DialogStackOverlay must be used within a DialogStack');
+    throw new Error("DialogStackOverlay must be used within a DialogStack");
   }
 
   const handleClick = useCallback(() => {
@@ -175,9 +175,9 @@ export const DialogStackOverlay = ({
     // biome-ignore lint/a11y/useKeyWithClickEvents: "This is a clickable overlay"
     <div
       className={cn(
-        'fixed inset-0 z-50 bg-black/80',
-        'data-[state=closed]:animate-out data-[state=open]:animate-in',
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+        "fixed inset-0 z-40 bg-black/80",
+        "data-[state=closed]:animate-out data-[state=open]:animate-in",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className
       )}
       onClick={handleClick}
@@ -188,8 +188,8 @@ export const DialogStackOverlay = ({
 
 export type DialogStackBodyProps = HTMLAttributes<HTMLDivElement> & {
   children:
-  | ReactElement<DialogStackChildProps>[]
-  | ReactElement<DialogStackChildProps>;
+    | ReactElement<DialogStackChildProps>[]
+    | ReactElement<DialogStackChildProps>;
 };
 
 export const DialogStackBody = ({
@@ -201,7 +201,7 @@ export const DialogStackBody = ({
   const [totalDialogs, setTotalDialogs] = useState(Children.count(children));
 
   if (!context) {
-    throw new Error('DialogStackBody must be used within a DialogStack');
+    throw new Error("DialogStackBody must be used within a DialogStack");
   }
 
   if (!context.isOpen) {
@@ -219,12 +219,13 @@ export const DialogStackBody = ({
       <Portal.Root>
         <div
           className={cn(
-            'pointer-events-none fixed inset-0 z-50 mx-auto flex w-full max-w-lg flex-col items-center justify-center',
+            "fixed inset-0 z-50 flex items-center justify-center",
             className
           )}
+          // 移除 pointerEvents: 'none'，避免阻止子元素交互
           {...props}
         >
-          <div className="pointer-events-auto relative flex w-full flex-col items-center justify-center">
+          <div className="relative mx-auto flex w-full max-w-lg flex-col items-center justify-center">
             {Children.map(children, (child, index) => {
               const childElement = child as ReactElement<{
                 index: number;
@@ -259,18 +260,12 @@ export const DialogStackContent = ({
   const context = useContext(DialogStackContext);
 
   if (!context) {
-    throw new Error('DialogStackContent must be used within a DialogStack');
+    throw new Error("DialogStackContent must be used within a DialogStack");
   }
 
   if (!context.isOpen) {
     return null;
   }
-
-  const handleClick = () => {
-    if (context.clickable && context.activeIndex > index) {
-      context.setActiveIndex(index ?? 0);
-    }
-  };
 
   const distanceFromActive = index - context.activeIndex;
   const translateY =
@@ -278,35 +273,33 @@ export const DialogStackContent = ({
       ? `-${Math.abs(distanceFromActive) * offset}px`
       : `${Math.abs(distanceFromActive) * offset}px`;
 
+  const isActive = context.activeIndex === index;
+
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: "This is a clickable dialog"
-    // biome-ignore lint/a11y/useKeyWithClickEvents: "This is a clickable dialog"
     <div
       className={cn(
-        'h-auto w-full rounded-lg border bg-background p-6 shadow-lg transition-all duration-300',
+        "h-auto w-full rounded-lg border bg-background p-6 shadow-lg transition-all duration-300",
         className
       )}
-      onClick={handleClick}
       style={{
         top: 0,
         transform: `translateY(${translateY})`,
         width: `calc(100% - ${Math.abs(distanceFromActive) * 10}px)`,
         zIndex: 50 - Math.abs(context.activeIndex - (index ?? 0)),
-        position: distanceFromActive ? 'absolute' : 'relative',
+        position: distanceFromActive ? "absolute" : "relative",
         opacity: distanceFromActive > 0 ? 0 : 1,
-        cursor:
-          context.clickable && context.activeIndex > index
-            ? 'pointer'
-            : 'default',
+        cursor: "default",
+        pointerEvents: isActive ? "auto" : "none",
       }}
       {...props}
     >
       <div
-        className={cn(
-          'h-full w-full transition-all duration-300',
-          context.activeIndex !== index &&
-          'pointer-events-none select-none opacity-0'
-        )}
+        className="h-full w-full"
+        style={{
+          pointerEvents: isActive ? "auto" : "none",
+          opacity: isActive ? 1 : 0,
+          userSelect: isActive ? "auto" : "none",
+        }}
       >
         {children}
       </div>
@@ -323,7 +316,7 @@ export const DialogStackTitle = ({
 }: DialogStackTitleProps) => (
   <h2
     className={cn(
-      'font-semibold text-lg leading-none tracking-tight',
+      "font-semibold text-lg leading-none tracking-tight",
       className
     )}
     {...props}
@@ -339,7 +332,7 @@ export const DialogStackDescription = ({
   className,
   ...props
 }: DialogStackDescriptionProps) => (
-  <p className={cn('text-muted-foreground text-sm', className)} {...props}>
+  <p className={cn("text-muted-foreground text-sm", className)} {...props}>
     {children}
   </p>
 );
@@ -352,7 +345,7 @@ export const DialogStackHeader = ({
 }: DialogStackHeaderProps) => (
   <div
     className={cn(
-      'flex flex-col space-y-1.5 text-center sm:text-left',
+      "flex flex-col space-y-1.5 text-center sm:text-left",
       className
     )}
     {...props}
@@ -367,7 +360,7 @@ export const DialogStackFooter = ({
   ...props
 }: DialogStackFooterProps) => (
   <div
-    className={cn('flex items-center justify-end space-x-2 pt-4', className)}
+    className={cn("flex items-center justify-end space-x-2 pt-4", className)}
     {...props}
   >
     {children}
@@ -387,7 +380,7 @@ export const DialogStackNext = ({
   const context = useContext(DialogStackContext);
 
   if (!context) {
-    throw new Error('DialogStackNext must be used within a DialogStack');
+    throw new Error("DialogStackNext must be used within a DialogStack");
   }
 
   const handleNext = () => {
@@ -415,7 +408,7 @@ export const DialogStackNext = ({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+        "inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         className
       )}
       disabled={context.activeIndex >= context.totalDialogs - 1}
@@ -423,7 +416,7 @@ export const DialogStackNext = ({
       type="button"
       {...props}
     >
-      {children || 'Next'}
+      {children || "Next"}
     </button>
   );
 };
@@ -442,7 +435,7 @@ export const DialogStackPrevious = ({
   const context = useContext(DialogStackContext);
 
   if (!context) {
-    throw new Error('DialogStackPrevious must be used within a DialogStack');
+    throw new Error("DialogStackPrevious must be used within a DialogStack");
   }
 
   const handlePrevious = () => {
@@ -470,7 +463,7 @@ export const DialogStackPrevious = ({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+        "inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         className
       )}
       disabled={context.activeIndex <= 0}
@@ -478,7 +471,7 @@ export const DialogStackPrevious = ({
       type="button"
       {...props}
     >
-      {children || 'Previous'}
+      {children || "Previous"}
     </button>
   );
 };

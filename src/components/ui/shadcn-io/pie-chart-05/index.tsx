@@ -69,7 +69,7 @@ export function ChartPieLabelList() {
                   className="fill-background"
                   stroke="none"
                   fontSize={12}
-                  formatter={(value) =>
+                  formatter={(value: string) =>
                     chartConfig[value as keyof typeof chartConfig]?.label
                   }
                 />

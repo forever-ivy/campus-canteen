@@ -5,13 +5,13 @@ CREATE TABLE [Order] (
     MerchantID CHAR(5) NOT NULL,                -- 档口编号
     OrderTime DATETIME NOT NULL,                -- 下单时间
     TotalAmount DECIMAL(10, 2) NOT NULL,        -- 总金额
-    Status VARCHAR(10) CHECK (Status IN ('待支付', '已完成')) NOT NULL, -- 订单状态（保持 VARCHAR，不改类型）
+    Status NVARCHAR(10) CHECK (Status IN (N'待支付', N'已完成')) NOT NULL, -- 订单状态（使用 NVARCHAR 支持中文）
     FOREIGN KEY (StudentID) REFERENCES Student(StudentID),
     FOREIGN KEY (MerchantID) REFERENCES Merchant(MerchantID)
 );
 
 INSERT INTO [Order] (OrderID, StudentID, MerchantID, OrderTime, TotalAmount, Status) VALUES  
-('011012511030019', '202411040504', '01101', '2025-11-03 18:45:00', 18.00, '已完成'),
+('011012511030019', '202411040504', '01101', '2025-11-03 18:45:00', 18.00, N'已完成'),
 ('011022511030002', '202411040102', '01102', '2025-11-03 12:10:00', 11.00, N'已完成'), 
 ('012012511030003', '202411040103', '01201', '2025-11-03 12:15:00', 7.00, N'已完成'), 
 ('021012511030004', '202411040104', '02101', '2025-11-03 12:20:00', 11.00, N'待支付'), 
