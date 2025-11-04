@@ -5,6 +5,7 @@ import Table from "../../components/Table";
 import { SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import AddOrderDialog from "@/components/AddOrderDialog";
 
 const Order = () => {
   const router = useRouter();
@@ -65,6 +66,7 @@ const Order = () => {
           </Suspense>
         </div>
       </div>
+      <AddOrderDialog />
     </div>
   );
 };
