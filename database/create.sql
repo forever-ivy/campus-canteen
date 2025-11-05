@@ -1,9 +1,0 @@
--- CREATE DATABASE canteen
-
-
-ALTER DATABASE [SmartCanteenSystem] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-GO
-
-DROP DATABASE [SmartCanteenSystem];
-GO
-

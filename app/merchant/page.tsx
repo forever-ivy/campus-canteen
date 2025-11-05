@@ -1,4 +1,4 @@
-import MerchantLogin from "../../components/merchant-login";
+import MerchantLogin from "../../components/Merchant/merchant-login";
 
 const MerchantPage = () => {
   return (

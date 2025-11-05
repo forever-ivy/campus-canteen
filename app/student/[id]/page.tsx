@@ -1,4 +1,4 @@
-import Category from "../../../components/category";
+import Category from "../../../components/Student/category";
 
 const DetailPage = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;

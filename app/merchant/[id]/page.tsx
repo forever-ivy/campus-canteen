@@ -1,6 +1,10 @@
-import MerchantDashboard from "../../../components/merchant-dashboard";
+import MerchantDashboard from "../../../components/Merchant/merchant-dashboard";
 
-const MerchantDetailPage = async ({ params }: { params: Promise<{ id: string }> }) => {
+const MerchantDetailPage = async ({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) => {
   const { id } = await params;
 
   return (
